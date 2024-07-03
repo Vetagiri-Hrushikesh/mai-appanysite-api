@@ -1,3 +1,4 @@
+// app/modules/user/user.lib.ts
 import bcrypt from 'bcryptjs';
 import UserModel, { IUser } from './user.model';
 

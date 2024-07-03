@@ -5,6 +5,7 @@ import cors from 'cors';
 import connectDatabase from './config/database';
 import * as AppModule from './app/modules/index';
 import indexRoute from './routes/index';
+import methodOverride from 'method-override';
 
 // Set host and port from environment variables or default values
 const host = process.env.HOST ?? 'localhost';
@@ -13,6 +14,7 @@ const port = process.env.PORT ? Number(process.env.PORT) : 3000;
 // Create an instance of Express and an HTTP server
 const app = express();
 const server = createServer(app);
+app.use(methodOverride('_method'));
 
 // Destructure modules from AppModule
 const { AuthModule, UserModule } = AppModule;

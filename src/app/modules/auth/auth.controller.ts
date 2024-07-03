@@ -1,166 +1,84 @@
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import response from '../../../helper/response';
-import UserModel from '../user/user.model';
-import AuthValidation from './auth.validation';
-import { sendEmail } from './emailService';
+// app/modules/auth/auth.controller.ts
 import { Request, Response, NextFunction } from 'express';
-import path from 'path';import fs from 'fs';
-const configPath = path.resolve(__dirname, '../../../config/config.json');
-
-let config;
-
-try {
-    const rawData = fs.readFileSync(configPath, 'utf-8');
-    config = JSON.parse(rawData);
-} catch (error) {
-    console.error('Failed to load config file:', error);
-    throw error;
-}
-
-const authValidation = new AuthValidation();
-const secretKey: string = config.development.JWTsecret;
-const saltRounds: number = 10;
-
-interface TokenPayload {
-    id: string;
-    username: string;
-    email: string;
-    role: string;
-}
+import { AuthServiceFactory } from './AuthServiceFactory';
+import { IAuthService } from './IAuthService';
+import response from '../../../helper/response';
 
 export default class AuthController {
-    constructor() {}
+    private getAuthService(authType: string): IAuthService {
+        return AuthServiceFactory.getAuthService(authType);
+    }
 
-    async login(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-        try {
-            const { email, password } = req.body;
-
-            if (!email || !password) {
-                return res.status(400).json(response.error(false, 'Email and password are required'));
-            }
-
-            const result = await authValidation.checkUser({ email });
-
-            if (result.success) {
-                const matched = await bcrypt.compare(password, result.data.password);
-                if (matched) {
-                    req.user = result.data;
-                    next();
-                } else {
-                    return res.status(200).json(response.error(false, 'Incorrect email or password'));
-                }
-            } else {
-                return res.status(200).json(response.error(false, result.message));
-            }
-        } catch (e: any) {
-            return res.status(500).json(response.error(false, 'An error occurred', e.message));
+    async login(req: Request, res: Response, next: NextFunction): Promise<Response> {
+        const { email, password, authType } = req.body;
+        const authService = this.getAuthService(authType);
+        const result = await authService.login(email, password);
+        if (result.success) {
+            return authService.sendToken(res, result.token);
+        } else {
+            return res.status(400).json(response.error(false, result.message));
         }
     }
 
     async signup(req: Request, res: Response): Promise<Response> {
-        try {
-            const { username, email, password, phone } = req.body;
-
-            if (!username || !email || !password || !phone) {
-                return res.status(400).json(response.error(false, 'Missing required fields'));
-            }
-
-            const hashedPassword = bcrypt.hashSync(password, saltRounds);
-
-            const newUser = await UserModel.create({
-                username,
-                email,
-                password: hashedPassword,
-                role: 'admin',
-            });
-
-            return res.status(201).json(response.single(true, 'New User Created', newUser));
-        } catch (e: any) {
-            console.error('Error in signup:', e);
-            return res.status(500).json(response.error(false, 'An error occurred during signup', e.message));
+        const { username, email, password, phone, role, authType } = req.body;
+        const authService = this.getAuthService(authType);
+        const result = await authService.signup(username, email, password, phone, role);
+        if (result.success) {
+            return res.status(201).json(response.single(true, 'User registered successfully', null));
+        } else {
+            return res.status(400).json(response.error(false, result.message));
         }
     }
 
     async forgotPassword(req: Request, res: Response): Promise<Response> {
-        try {
-            const { email } = req.body;
-            const user = await UserModel.findOne({ email });
-
-            if (!user) {
-                return res.status(404).json(response.error(false, 'User not found'));
-            }
-
-            const token = jwt.sign({ id: user._id, username: user.username, email: user.email, role: user.role }, secretKey, { expiresIn: '1h' });
-            const resetLink = `http://${config.development.server.host}:${config.development.server.port}/reset-password?token=${token}`;
-
-            const emailResponse = await sendEmail(user.email, 'Password Reset', `Click here to reset your password: ${resetLink}`);
-
-            if (emailResponse.success) {
-                return res.status(200).json(response.single(true, 'Password reset email sent', null));
-            } else {
-                return res.status(500).json(response.error(false, emailResponse.message, emailResponse.error));
-            }
-        } catch (e: any) {
-            return res.status(500).json(response.error(false, 'An error occurred', e.message));
+        const { email, authType } = req.body;
+        const authService = this.getAuthService(authType);
+        const result = await authService.forgotPassword(email);
+        if (result.success) {
+            return res.json(response.single(true, result.message, null));
+        } else {
+            return res.status(400).json(response.error(false, result.message));
         }
+    }
+
+    async resetPasswordForm(req: Request, res: Response): Promise<void> {
+        const authService = this.getAuthService('jwt');
+        await authService.resetPasswordForm(req, res);
     }
 
     async resetPassword(req: Request, res: Response): Promise<Response> {
-        try {
-            const { token, newPassword } = req.body;
-
-            const decoded = jwt.verify(token, secretKey) as TokenPayload;
-            const hashedPassword = bcrypt.hashSync(newPassword, saltRounds);
-
-            await UserModel.findByIdAndUpdate(decoded.id, { password: hashedPassword });
-
-            return res.status(200).json(response.single(true, 'Password reset successfully', null));
-        } catch (e: any) {
-            return res.status(500).json(response.error(false, 'An error occurred', e.message));
+        console.log('Received request to reset password');
+        console.log('Headers:', req.headers);
+        console.log('Body:', req.body);
+        
+        const { token, password } = req.body;
+        console.log('Extracted Token:', token);
+        console.log('Extracted Password:', password);
+    
+        if (!token || !password) {
+            return res.status(400).json(response.error(false, 'Token and new password are required'));
+        }
+    
+        const authService = this.getAuthService('jwt');
+        const result = await authService.resetPassword(token, password);
+        if (result.success) {
+            return res.json(response.single(true, result.message, null));
+        } else {
+            return res.status(400).json(response.error(false, result.message));
         }
     }
-
-    async prepareToken(req: Request, res: Response, next: NextFunction): Promise<void> {
-        try {
-            req.auth = {
-                id: req.user!._id,
-                username: req.user!.username,
-                email: req.user!.email,
-                role: req.user!.role,
-            };
-            next();
-        } catch (e: any) {
-            throw e;
-        }
-    }
-
-    generateToken(req: Request, res: Response, next: NextFunction): void {
-        req.tokenObject = {
-            token: jwt.sign(req.auth!, secretKey, {
-                expiresIn: '30 days',
-            }),
-        };
-        next();
-    }
-
-    sendToken(req: Request, res: Response): void {
-        res.setHeader('x-auth-token', req.tokenObject!.token);
-        res.json(response.single(true, 'Enjoy your token!', { token: req.tokenObject!.token }));
-    }
-
+    
+    
     async isAuthenticate(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-        try {
-            const token = req.headers['x-auth-token'] as string;
-            if (token) {
-                const decoded = jwt.verify(token, secretKey) as TokenPayload;
-                req.auth = decoded;
-                const user = await UserModel.findOne({ _id: req.auth.id });
-                return user ? next() : res.status(200).json(response.error(false, 'Failed to authenticate user'));
-            }
-            return res.json(response.error(false, 'You are not authenticated', 'No token provided'));
-        } catch (e: any) {
-            return res.json(response.error(false, e.name, e.message));
+        const token = req.headers['x-auth-token'] as string;
+        const authService = this.getAuthService('jwt');
+        const result = await authService.isAuthenticate(token);
+        if (result.success) {
+            req.auth = result.user;
+            next();
+        } else {
+            return res.status(401).json(response.error(false, result.message));
         }
     }
 
@@ -168,7 +86,7 @@ export default class AuthController {
         if (req.auth!.role === 'user' || req.auth!.role === 'admin') {
             next();
         } else {
-            res.status(200).json(response.error(false, 'You are not admin or user', null));
+            res.status(403).json(response.error(false, 'You are not authorized', null));
         }
     }
 
@@ -176,7 +94,7 @@ export default class AuthController {
         if (req.auth!.role === 'admin') {
             next();
         } else {
-            res.status(200).json(response.error(false, 'You are not admin', null));
+            res.status(403).json(response.error(false, 'You are not authorized', null));
         }
     }
 }

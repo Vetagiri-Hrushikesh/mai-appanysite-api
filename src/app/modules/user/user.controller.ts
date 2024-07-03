@@ -1,3 +1,4 @@
+// app/modules/user/user.controller.ts
 import { Request, Response } from 'express';
 import response from '../../../helper/response';
 import UserLib from './user.lib';

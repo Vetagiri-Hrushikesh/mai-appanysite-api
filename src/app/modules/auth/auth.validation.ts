@@ -1,8 +1,8 @@
+// app/modules/auth/auth.validation.ts
 import { Request, Response, NextFunction } from 'express';
 import UserModel from '../user/user.model';
 
 export default class AuthValidation {
-    // 422 (Unprocessable Entity)
     static signupValidation(req: Request, res: Response, next: NextFunction): Response | void {
         const { username, email, password, phone } = req.body;
 
@@ -31,8 +31,8 @@ export default class AuthValidation {
     }
 
     static resetPasswordValidation(req: Request, res: Response, next: NextFunction): Response | void {
-        const { token, newPassword } = req.body;
-        if (!token || !newPassword) {
+        const { token, password } = req.body;
+        if (!token || !password) {
             return res.status(400).json({ success: false, message: 'Token and new password are required' });
         }
         next();
@@ -57,7 +57,6 @@ export default class AuthValidation {
         next();
     }
 
-    // 422 (Unprocessable Entity)
     static loginValidation(req: Request, res: Response, next: NextFunction): Response | void {
         const { email, password } = req.body;
 
@@ -71,7 +70,6 @@ export default class AuthValidation {
         next();
     }
 
-    // Status 409: Check if an email exists in the database
     async checkEmailExistOrNot(email: string): Promise<{ success: boolean; message?: string }> {
         try {
             const response = await UserModel.findOne({ email });
@@ -87,7 +85,6 @@ export default class AuthValidation {
         }
     }
 
-    // Status 404: Check if a user exists based on email
     async checkUser({ email }: { email: string }): Promise<{ success: boolean; message?: string; data?: any }> {
         try {
             const response = await UserModel.findOne({ email });

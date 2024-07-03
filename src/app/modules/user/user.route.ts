@@ -1,3 +1,4 @@
+// app/modules/user/user.route.ts
 import express, { Router } from 'express';
 import AuthController from '../auth/auth.controller';
 import AuthValidation from '../auth/auth.validation';
