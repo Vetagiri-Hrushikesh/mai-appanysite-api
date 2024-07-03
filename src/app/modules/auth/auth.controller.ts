@@ -48,18 +48,12 @@ export default class AuthController {
     }
 
     async resetPassword(req: Request, res: Response): Promise<Response> {
-        console.log('Received request to reset password');
-        console.log('Headers:', req.headers);
-        console.log('Body:', req.body);
-        
         const { token, password } = req.body;
-        console.log('Extracted Token:', token);
-        console.log('Extracted Password:', password);
-    
+        console.log('Token:', token);
+        console.log('Password:', password);
         if (!token || !password) {
             return res.status(400).json(response.error(false, 'Token and new password are required'));
         }
-    
         const authService = this.getAuthService('jwt');
         const result = await authService.resetPassword(token, password);
         if (result.success) {
@@ -68,8 +62,7 @@ export default class AuthController {
             return res.status(400).json(response.error(false, result.message));
         }
     }
-    
-    
+
     async isAuthenticate(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         const token = req.headers['x-auth-token'] as string;
         const authService = this.getAuthService('jwt');

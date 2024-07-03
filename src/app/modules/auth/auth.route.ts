@@ -21,7 +21,6 @@ router.route('/forgot-password').post(
     (req: Request, res: Response) => authController.forgotPassword(req, res)
 );
 
-// Add this route for displaying the reset password form
 router.route('/reset-password-form').get(
     (req: Request, res: Response) => authController.resetPasswordForm(req, res)
 );

@@ -22,6 +22,11 @@
             "input": "src/config",
             "glob": "config.json",
             "output": "src/config"
+          },
+          {
+            "input": "src/config",
+            "glob": "serviceAccountKey.json",
+            "output": "src/config"
           }
         ],
         "generatePackageJson": true,
