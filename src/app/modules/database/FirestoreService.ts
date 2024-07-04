@@ -1,28 +1,36 @@
+// app/modules/database/FirestoreService.ts
 import { admin } from '../../../config/firebaseAdminConfig';
 import { IDatabaseService } from './IDatabaseService';
 
 const firestore = admin.firestore();
 
-export class FirestoreService implements IDatabaseService {
+class FirestoreService implements IDatabaseService {
+    private static instance: FirestoreService;
+    private isConnected = false;
+
+    private constructor() { }
+
+    static getInstance(): FirestoreService {
+        if (!FirestoreService.instance) {
+            FirestoreService.instance = new FirestoreService();
+        }
+        return FirestoreService.instance;
+    }
+
     async connect(): Promise<void> {
         // Firestore connection is handled by Firebase Admin SDK initialization
+        this.isConnected = true;
     }
 
     async disconnect(): Promise<void> {
         // Firestore doesn't require a manual disconnection
     }
 
-    async getUserByEmail(email: string): Promise<any> {
-        const userSnapshot = await firestore.collection('users').where('email', '==', email).get();
-        return userSnapshot.empty ? null : userSnapshot.docs[0].data();
-    }
-
-    async createUser(user: any): Promise<void> {
-        await firestore.collection('users').add(user);
-    }
-
-    async updateUserPassword(userId: string, newPassword: string): Promise<void> {
-        const userRef = firestore.collection('users').doc(userId);
-        await userRef.update({ password: newPassword });
+    async ensureConnection(): Promise<void> {
+        if (!this.isConnected) {
+            await this.connect();
+        }
     }
 }
+
+export default FirestoreService.getInstance();

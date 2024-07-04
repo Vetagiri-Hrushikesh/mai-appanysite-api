@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import UserModel from '../user/user.model';
+import UserModel from '../user/models/user.model';
 
 export default class AuthValidation {
     // 422 (Unprocessable Entity)

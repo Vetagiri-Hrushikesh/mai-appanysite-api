@@ -1,6 +1,6 @@
 // app/modules/user/user.lib.ts
 import bcrypt from 'bcryptjs';
-import UserModel, { IUser } from './user.model';
+import UserModel, { IUser } from './models/user.model';
 
 const saltRounds = 10;
 

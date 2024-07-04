@@ -1,7 +1,7 @@
 // app/modules/auth/auth.controller.ts
 import { Request, Response, NextFunction } from 'express';
-import { AuthServiceFactory } from './AuthServiceFactory';
-import { IAuthService } from './IAuthService';
+import { AuthServiceFactory } from './services/AuthServiceFactory';
+import { IAuthService } from './services/IAuthService';
 import response from '../../../helper/response';
 
 export default class AuthController {

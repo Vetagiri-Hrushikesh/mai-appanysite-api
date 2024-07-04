@@ -1,6 +1,6 @@
 
 import nodemailer, { Transporter } from 'nodemailer';
-import config from '../../../config/config.json';
+import config from '../../../../../config/config.json'
 
 interface EmailConfig {
   development: {

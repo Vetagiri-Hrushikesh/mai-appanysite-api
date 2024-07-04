@@ -2,7 +2,7 @@
 import { Request, Response } from 'express';
 import response from '../../../helper/response';
 import UserLib from './user.lib';
-import { IUser } from './user.model';
+import { IUser } from './models/user.model';
 
 class UserController {
     static async addUser(req: Request, res: Response): Promise<Response> {

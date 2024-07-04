@@ -1,9 +1,9 @@
 // app/modules/auth/AuthServiceFactory.ts
 import { IAuthService } from './IAuthService';
-import { FirebaseAuthService } from './FirebaseAuthService';
-import { JwtAuthService } from './JwtAuthService';
-import { IDatabaseService } from '../database/IDatabaseService';
-import { DatabaseServiceFactory } from '../database/DatabaseServiceFactory';
+import { FirebaseAuthService } from './firebase/FirebaseAuthService';
+import { JwtAuthService } from './jwt/JwtAuthService';
+import { IDatabaseService } from '../../database/IDatabaseService';
+import { DatabaseServiceFactory } from '../../user/services/DatabaseServiceFactory';
 
 interface AuthServiceFactoryParams {
     authType: string;
@@ -17,10 +17,10 @@ export class AuthServiceFactory {
 
         switch (authType) {
             case 'firebase':
-                return new FirebaseAuthService(databaseService);
+                return new FirebaseAuthService();
             case 'jwt':
             default:
-                return new JwtAuthService(databaseService);
+                return new JwtAuthService();
         }
     }
 }

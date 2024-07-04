@@ -1,6 +1,5 @@
 // app/modules/database/MongoDBService.ts
 import mongoose from 'mongoose';
-import UserModel from '../user/user.model';
 import { IDatabaseService } from './IDatabaseService';
 import connectDatabase from '../../../config/database';
 
@@ -45,25 +44,10 @@ class MongoDBService implements IDatabaseService {
         console.log('Disconnected from MongoDB');
     }
 
-    private async ensureConnection(): Promise<void> {
+    async ensureConnection(): Promise<void> {
         if (!this.isConnected) {
             await this.connect();
         }
-    }
-
-    async getUserByEmail(email: string): Promise<any> {
-        await this.ensureConnection();
-        return UserModel.findOne({ email });
-    }
-
-    async createUser(user: any): Promise<void> {
-        await this.ensureConnection();
-        await UserModel.create(user);
-    }
-    
-    async updateUserPassword(userId: string, newPassword: string): Promise<void> {
-        await this.ensureConnection();
-        await UserModel.findByIdAndUpdate(userId, { password: newPassword });
     }
 }
 

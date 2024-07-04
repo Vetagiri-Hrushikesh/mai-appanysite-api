@@ -1,16 +1,14 @@
-import { IAuthService } from './IAuthService';
-import { IDatabaseService } from '../database/IDatabaseService';
+// app/modules/auth/FirebaseAuthService.ts
+import { IAuthService } from '../IAuthService';
+import { IDatabaseService } from '../../../database/IDatabaseService';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, updatePassword, User } from 'firebase/auth';
-import { auth as firebaseAuth } from '../../../config/firebase';
-import { admin as firebaseAdmin } from '../../../config/firebaseAdminConfig';
+import { auth as firebaseAuth } from '../../../../../config/firebase';
+import { admin as firebaseAdmin } from '../../../../../config/firebaseAdminConfig';
+import FirestoreUserService from '../../../user/services/firestore/FirestoreUserService';
 import { Response, Request } from 'express';
 
 export class FirebaseAuthService implements IAuthService {
-    private dbService: IDatabaseService;
-
-    constructor(dbService: IDatabaseService) {
-        this.dbService = dbService;
-    }
+    private dbService = FirestoreUserService;
 
     async login(email: string, password: string): Promise<any> {
         try {

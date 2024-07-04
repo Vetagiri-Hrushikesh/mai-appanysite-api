@@ -1,12 +1,13 @@
 // app/modules/auth/JwtAuthService.ts
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import config from '../../../config/config.json';
-import { IAuthService } from './IAuthService';
-import { IDatabaseService } from '../database/IDatabaseService';
+import config from '../../../../../config/config.json';
+import { IAuthService } from '../IAuthService';
+import { IUserService } from '../../../user/services/IUserService';
 import { Response, Request } from 'express';
-import response from '../../../helper/response';
-import { sendEmail } from './emailService';
+import response from '../../../../../helper/response';
+import { sendEmail } from '../email/emailService';
+import UserService from '../../../user/services/mongodb/MongoDBUserService';
 
 const secretKey: string = config.development.JWTsecret;
 const saltRounds: number = 10;
@@ -19,14 +20,14 @@ interface TokenPayload {
 }
 
 export class JwtAuthService implements IAuthService {
-    private dbService: IDatabaseService;
+    private userService: IUserService;
 
-    constructor(dbService: IDatabaseService) {
-        this.dbService = dbService;
+    constructor() {
+        this.userService = UserService;
     }
 
     async login(email: string, password: string): Promise<any> {
-        const user = await this.dbService.getUserByEmail(email);
+        const user = await this.userService.getUserByEmail(email);
         if (user && bcrypt.compareSync(password, user.password)) {
             const token = this.generateToken({ id: user._id, email: user.email, role: user.role });
             return { success: true, token };
@@ -36,7 +37,7 @@ export class JwtAuthService implements IAuthService {
 
     async signup(username: string, email: string, password: string, phone: string, role: string, authType: string): Promise<any> {
         const hashedPassword = bcrypt.hashSync(password, saltRounds);
-        await this.dbService.createUser({ username, email, password: hashedPassword, phone, role, authType });
+        await this.userService.createUser({ username, email, password: hashedPassword, phone, role, authType });
         return { success: true, message: 'User registered successfully' };
     }
 
@@ -45,7 +46,7 @@ export class JwtAuthService implements IAuthService {
     }
 
     async forgotPassword(email: string): Promise<any> {
-        const user = await this.dbService.getUserByEmail(email);
+        const user = await this.userService.getUserByEmail(email);
         if (!user) {
             return { success: false, message: 'User not found' };
         }
@@ -67,8 +68,8 @@ export class JwtAuthService implements IAuthService {
     
     async resetPasswordForm(req: Request, res: Response): Promise<void> {
         const token = req.query.token as string;
-        const authType = req.query.authType || 'jwt'; // Hardcoding default values
-        const dbType = req.query.dbType || 'mongodb'; // Hardcoding default values
+        const authType = req.query.authType || 'jwt';
+        const dbType = req.query.dbType || 'mongodb';
         res.send(`
             <form id="resetPasswordForm">
                 <input type="hidden" name="token" value="${token}" />
@@ -106,7 +107,7 @@ export class JwtAuthService implements IAuthService {
     async resetPassword(token: string, newPassword: string): Promise<any> {
         const decoded = jwt.verify(token, secretKey) as any;
         const hashedPassword = bcrypt.hashSync(newPassword, saltRounds);
-        await this.dbService.updateUserPassword(decoded.id, hashedPassword);
+        await this.userService.updateUserPassword(decoded.id, hashedPassword);
         return { success: true, message: 'Password reset successfully' };
     }
 
@@ -133,7 +134,7 @@ export class JwtAuthService implements IAuthService {
     async isAuthenticate(token: string): Promise<any> {
         try {
             const decoded = jwt.verify(token, secretKey) as TokenPayload;
-            const user = await this.dbService.getUserByEmail(decoded.email);
+            const user = await this.userService.getUserByEmail(decoded.email);
             if (user) {
                 return { success: true, user: decoded };
             } else {
