@@ -1,11 +1,17 @@
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, updatePassword, User } from 'firebase/auth';
 import { IAuthService } from './IAuthService';
-import UserModel from '../user/user.model';
+import { IDatabaseService } from '../database/IDatabaseService';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, updatePassword, User } from 'firebase/auth';
 import { auth as firebaseAuth } from '../../../config/firebase';
 import { admin as firebaseAdmin } from '../../../config/firebaseAdminConfig';
 import { Response, Request } from 'express';
 
 export class FirebaseAuthService implements IAuthService {
+    private dbService: IDatabaseService;
+
+    constructor(dbService: IDatabaseService) {
+        this.dbService = dbService;
+    }
+
     async login(email: string, password: string): Promise<any> {
         try {
             const userCredential = await signInWithEmailAndPassword(firebaseAuth, email, password);
@@ -17,14 +23,24 @@ export class FirebaseAuthService implements IAuthService {
         }
     }
 
-    async signup(username: string, email: string, password: string, phone: string, role: string): Promise<any> {
+    async signup(username: string, email: string, password: string, phone: string, role: string, authType: string): Promise<any> {
         try {
             const userCredential = await createUserWithEmailAndPassword(firebaseAuth, email, password);
             const user = userCredential.user;
-            await UserModel.create({ username, email, password, phone, role });
+            await this.dbService.createUser({ username, email, password, phone, role, authType });
             return { success: true, message: 'User registered successfully', user };
         } catch (error: any) {
             return { success: false, message: error.message };
+        }
+    }
+
+    async logout(token: string): Promise<any> {
+        try {
+            const decodedToken = await firebaseAdmin.auth().verifyIdToken(token, true);
+            await firebaseAdmin.auth().revokeRefreshTokens(decodedToken.uid);
+            return { success: true, message: 'Logged out successfully' };
+        } catch (error: any) {
+            return { success: false, message: 'Failed to log out' };
         }
     }
 
@@ -93,9 +109,6 @@ export class FirebaseAuthService implements IAuthService {
                     const form = event.target;
                     const token = form.querySelector('input[name="token"]').value;
                     const password = form.querySelector('input[name="password"]').value;
-
-                    console.log('Token:', token);
-                    console.log('Password:', password);
 
                     const response = await fetch('/api/auth/reset-password', {
                         method: 'PUT',

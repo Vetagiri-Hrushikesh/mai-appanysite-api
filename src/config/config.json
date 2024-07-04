@@ -10,8 +10,8 @@
     "JWTsecret": "MySecretKey",
     "email": {
       "auth": {
-        "user": "dummy2003dummy@gmail.com",
-        "pass": "dqcz mzcj bixd itre"
+        "user": "dummymailforapitesting@gmail.com",
+        "pass": "pmqi gqxg xsnt tyqf"
       }
     }
   },
@@ -26,8 +26,8 @@
     "JWTsecret": "MySecretKey",
     "email": {
       "auth": {
-        "user": "dummy2003dummy@gmail.com",
-        "pass": "dqcz mzcj bixd itre"
+        "user": "dummymailforapitesting@gmail.com",
+        "pass": "pmqi gqxg xsnt tyqf"
       }
     }
   }

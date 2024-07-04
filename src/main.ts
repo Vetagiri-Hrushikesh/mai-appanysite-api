@@ -1,5 +1,6 @@
 import express from 'express';
 import { createServer } from 'http';
+import { setupSwagger } from './config/swagger';
 import path from 'path';
 import cors from 'cors';
 import connectDatabase from './config/database';
@@ -7,12 +8,14 @@ import * as AppModule from './app/modules/index';
 import indexRoute from './routes/index';
 import methodOverride from 'method-override';
 
+
 // Set host and port from environment variables or default values
 const host = process.env.HOST ?? 'localhost';
 const port = process.env.PORT ? Number(process.env.PORT) : 3000;
 
 // Create an instance of Express and an HTTP server
 const app = express();
+setupSwagger(app);
 const server = createServer(app);
 app.use(methodOverride('_method'));
 
@@ -25,7 +28,7 @@ const { AuthController, AuthRoute } = AuthModule;
 const authController = new AuthController();
 
 // Connect to the database
-connectDatabase();
+// connectDatabase();
 
 // CORS configuration options
 const corsOptions: cors.CorsOptions = {
@@ -81,6 +84,8 @@ app.get('/', (req, res) => {
  *
  * @returns {void}
  */
+
+
 server.listen(port, host, () => {
   console.log(`[ ready ] http://${host}:${port}`);
 });

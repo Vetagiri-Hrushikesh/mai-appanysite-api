@@ -1,8 +1,12 @@
 import * as admin from 'firebase-admin';
-const serviceAccount = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY as string);
+import * as serviceAccount from './serviceAccountKey.json';
 
+
+console.log(serviceAccount)
+// Initialize Firebase Admin SDK
 admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount as admin.ServiceAccount)
+    credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
+    databaseURL: `https://${serviceAccount.project_id}.firebaseio.com`
 });
 
 export { admin };
